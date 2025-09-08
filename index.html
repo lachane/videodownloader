@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>去水印下载工具</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            max-width: 800px;
+            width: 100%;
+            margin: 20px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-align: center;
+            padding: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        /* 密码验证界面 */
+        .auth-section {
+            text-align: center;
+        }
+
+        .auth-section h2 {
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 1.8em;
+        }
+
+        .input-group {
+            margin-bottom: 25px;
+        }
+
+        .input-group label {
+            display: block;
+            color: #555;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        .input-group input {
+            width: 100%;
+            max-width: 300px;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.2s;
+            margin: 5px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* 主界面 */
+        .main-section {
+            display: none;
+        }
+
+        .section {
+            margin-bottom: 30px;
+        }
+
+        .section h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .url-input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            margin-bottom: 15px;
+            transition: border-color 0.3s;
+        }
+
+        .url-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .parse-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .parse-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .parse-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* 加载动画 */
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* 结果展示 */
+        .result-section {
+            display: none;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .video-info {
+            margin-bottom: 20px;
+        }
+
+        .video-title {
+            font-size: 1.2em;
+            color: #333;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+
+        .cover-preview {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .cover-image {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .download-section {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .download-btn {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: transform 0.2s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .download-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            display: none;
+        }
+
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .content {
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .download-section {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎬 去水印下载工具</h1>
+            <p>支持抖音、快手等平台视频无水印下载</p>
+        </div>
+
+        <div class="content">
+            <!-- 密码验证界面 -->
+            <div class="auth-section" id="authSection">
+                <h2>🔐 请输入访问密码</h2>
+                <div class="input-group">
+                    <label for="password">访问密码</label>
+                    <input type="password" id="password" placeholder="请输入密码">
+                </div>
+                <button class="btn" onclick="validatePassword()">验证</button>
+                <div class="error-message" id="authError"></div>
+            </div>
+
+            <!-- 主界面 -->
+            <div class="main-section" id="mainSection">
+                <div class="section">
+                    <h3>📎 粘贴分享链接</h3>
+                    <textarea class="url-input" id="shareLink" placeholder="请粘贴分享链接，例如：
+4.89 03/24 cNJ:/ K@W.md 随意"搭讪"韩国美女，印度富人区的三哥能有多自信？ # 外国人 # 歪果仁真会玩 # 印度 # 旅行 # 看世界  https://v.douyin.com/ZOqdo9qsYuY/ 复制此链接，打开Dou音搜索，直接观看视频！" rows="4"></textarea>
+                    <button class="parse-btn" id="parseBtn" onclick="parseVideo()">🔍 开始解析</button>
+                </div>
+
+                <!-- 加载动画 -->
+                <div class="loading" id="loadingSection">
+                    <div class="spinner"></div>
+                    <p>正在解析中，请稍候...</p>
+                </div>
+
+                <!-- 错误提示 -->
+                <div class="error-message" id="errorMessage"></div>
+                <div class="success-message" id="successMessage"></div>
+
+                <!-- 解析结果 -->
+                <div class="result-section" id="resultSection">
+                    <div class="video-info">
+                        <div class="video-title" id="videoTitle"></div>
+                        
+                        <div class="cover-preview">
+                            <img class="cover-image" id="coverImage" alt="视频封面">
+                        </div>
+                        
+                        <div class="download-section">
+                            <button class="download-btn" id="downloadVideo" onclick="downloadFile('video')">
+                                📹 下载视频
+                            </button>
+                            <button class="download-btn" id="downloadCover" onclick="downloadFile('cover')">
+                                🖼️ 下载封面
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 全局变量存储解析结果
+        let parseResult = null;
+
+        // 密码验证
+        function validatePassword() {
+            const password = document.getElementById('password').value;
+            const authError = document.getElementById('authError');
+            
+            if (password === '123456') {
+                document.getElementById('authSection').style.display = 'none';
+                document.getElementById('mainSection').style.display = 'block';
+                showMessage('验证成功！欢迎使用', 'success');
+            } else {
+                authError.textContent = '密码错误，请重新输入';
+                authError.style.display = 'block';
+            }
+        }
+
+        // 回车键验证密码
+        document.getElementById('password').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                validatePassword();
+            }
+        });
+
+        // 显示消息
+        function showMessage(message, type = 'error') {
+            const errorElement = document.getElementById('errorMessage');
+            const successElement = document.getElementById('successMessage');
+            
+            // 隐藏所有消息
+            errorElement.style.display = 'none';
+            successElement.style.display = 'none';
+            
+            if (type === 'success') {
+                successElement.textContent = message;
+                successElement.style.display = 'block';
+            } else {
+                errorElement.textContent = message;
+                errorElement.style.display = 'block';
+            }
+            
+            // 3秒后自动隐藏
+            setTimeout(() => {
+                errorElement.style.display = 'none';
+                successElement.style.display = 'none';
+            }, 3000);
+        }
+
+        // 提取链接的正则表达式
+        function extractUrl(text) {
+            const urlRegex = /https?:\/\/[^\s]+/g;
+            const matches = text.match(urlRegex);
+            return matches ? matches[0] : null;
+        }
+
+        // 解析视频
+        async function parseVideo() {
+            const shareLink = document.getElementById('shareLink').value.trim();
+            
+            if (!shareLink) {
+                showMessage('请输入分享链接');
+                return;
+            }
+
+            // 提取URL
+            const extractedUrl = extractUrl(shareLink);
+            if (!extractedUrl) {
+                showMessage('未找到有效的链接，请检查输入内容');
+                return;
+            }
+
+            // 显示加载状态
+            showLoading(true);
+            hideResult();
+            
+            try {
+                // 构建API请求
+                const apiUrl = `https://api.guijianpan.com/waterRemoveDetail/xxmQsyByAk?ak=3b5bd8a3f8c6409a8bdaf0f2430bf516&link=${encodeURIComponent(extractedUrl)}`;
+                
+                const response = await fetch(apiUrl);
+                const data = await response.json();
+                
+                showLoading(false);
+                
+                if (data.code === '10000' && data.content && data.content.success) {
+                    parseResult = data.content;
+                    displayResult(parseResult);
+                    showMessage('解析成功！', 'success');
+                } else {
+                    showMessage(data.msg || '解析失败，请检查链接是否正确');
+                }
+            } catch (error) {
+                console.error('解析错误:', error);
+                showLoading(false);
+                showMessage('网络错误，请稍后重试');
+            }
+        }
+
+        // 显示/隐藏加载状态
+        function showLoading(show) {
+            const loadingSection = document.getElementById('loadingSection');
+            const parseBtn = document.getElementById('parseBtn');
+            
+            loadingSection.style.display = show ? 'block' : 'none';
+            parseBtn.disabled = show;
+        }
+
+        // 显示解析结果
+        function displayResult(result) {
+            const resultSection = document.getElementById('resultSection');
+            const videoTitle = document.getElementById('videoTitle');
+            const coverImage = document.getElementById('coverImage');
+            
+            // 设置标题
+            videoTitle.textContent = result.title || '未知标题';
+            
+            // 设置封面
+            if (result.cover) {
+                coverImage.src = result.cover;
+                coverImage.style.display = 'block';
+            } else {
+                coverImage.style.display = 'none';
+            }
+            
+            // 显示结果区域
+            resultSection.style.display = 'block';
+        }
+
+        // 隐藏结果
+        function hideResult() {
+            document.getElementById('resultSection').style.display = 'none';
+        }
+
+        // 下载文件
+        async function downloadFile(type) {
+            if (!parseResult) {
+                showMessage('没有可下载的内容');
+                return;
+            }
+
+            let downloadUrl = '';
+            let filename = '';
+            
+            if (type === 'video') {
+                downloadUrl = parseResult.url;
+                filename = `${parseResult.title || 'video'}.mp4`;
+            } else if (type === 'cover') {
+                downloadUrl = parseResult.cover;
+                filename = `${parseResult.title || 'cover'}_封面.jpg`;
+            }
+
+            if (!downloadUrl) {
+                showMessage(`${type === 'video' ? '视频' : '封面'}链接不存在`);
+                return;
+            }
+
+            try {
+                // 创建下载链接
+                const link = document.createElement('a');
+                link.href = downloadUrl;
+                link.download = filename;
+                link.target = '_blank';
+                
+                // 对于跨域资源，尝试通过代理下载
+                if (type === 'video' || type === 'cover') {
+                    // 直接打开链接让用户手动下载
+                    window.open(downloadUrl, '_blank');
+                    showMessage(`已打开${type === 'video' ? '视频' : '封面'}链接，请手动保存`, 'success');
+                } else {
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    showMessage('下载开始！', 'success');
+                }
+            } catch (error) {
+                console.error('下载错误:', error);
+                showMessage('下载失败，请稍后重试');
+            }
+        }
+
+        // 页面加载完成后聚焦密码输入框
+        window.addEventListener('load', function() {
+            document.getElementById('password').focus();
+        });
+    </script>
+</body>
+</html>
